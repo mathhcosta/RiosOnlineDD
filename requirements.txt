@@ -1,0 +1,8 @@
+streamlit
+pandas
+plotly
+folium
+streamlit-folium
+requests
+streamlit-js-eval
+openpyxl

@@ -1,2 +1,12 @@
-# Auto detect text files and perform LF normalization
-* text=auto
+# Bancos de dados grandes
+bancos/*.db filter=lfs diff=lfs merge=lfs -text
+# Planilhas grandes
+estacoes/*.xlsx filter=lfs diff=lfs merge=lfs -text
+# Logos e imagens estáticas
+static/logos/* filter=lfs diff=lfs merge=lfs -text
+# Scripts e textos devem usar LF
+*.py text eol=lf
+*.md text eol=lf
+*.txt text eol=lf
+RiosOnlineDash/*.db filter=lfs diff=lfs merge=lfs -text
+logos/* filter=lfs diff=lfs merge=lfs -text
