@@ -652,15 +652,16 @@ with c4:
 c5, c6 = st.columns(2)
 with c5:
     st.plotly_chart(
-        grafico_frequencia(df_freq, "freq_final_vazante", "Frequência mínimas"),
+        grafico_frequencia(df_freq, "freq_inicio_vazante", "Frequência de ocorrência de máximas"),
         use_container_width=True
     )
-
+    
 with c6:
     st.plotly_chart(
-        grafico_frequencia(df_freq, "freq_inicio_vazante", "Frequência máximas"),
+        grafico_frequencia(df_freq, "freq_final_vazante", "Frequência de ocorrência de mínimas"),
         use_container_width=True
     )
+    
 
 
 
