@@ -604,6 +604,23 @@ with c1:
                 )
 
             else:
+                
+                st.markdown(
+                    f"""
+                    <div style="
+                        background-color:#e6f2ff;
+                        padding:12px 16px;
+                        border-radius:10px;
+                        margin-bottom:12px;
+                        font-size:18px;
+                        font-weight:600;
+                    ">
+                        📍 <b>{estacao['nome']}</b> — {estacao['codigo']}  
+                        <br>
+                    </div>
+                    """,
+                    unsafe_allow_html=True
+                )
                 st.warning("Não há dados recentes disponíveis para esta estação.")
 
         else:
