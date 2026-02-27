@@ -255,7 +255,21 @@ def obter_pais_por_gps(lat, lon):
 
 def grafico_variabilidade(df_anuais):
 
-    df_10 = df_anuais.sort_values("ano", ascending=False).head(10)
+    ano_atual = datetime.now().year
+
+    # 1️⃣ Remover ano corrente
+    df = df_anuais[df_anuais["ano"] < ano_atual].copy()
+
+    # 2️⃣ Remover anos com dados faltantes
+    df = df.dropna(subset=["variabilidade"])
+
+    # (opcional extra segurança)
+    df = df[df["variabilidade"] != 0]
+
+    # 3️⃣ Ordenar por ano decrescente e pegar os 10 últimos válidos
+    df_10 = df.sort_values("ano", ascending=False).head(10)
+
+    # 4️⃣ Reordenar crescente para o gráfico ficar cronológico
     df_10 = df_10.sort_values("ano")
 
     fig = go.Figure()
@@ -266,7 +280,11 @@ def grafico_variabilidade(df_anuais):
         mode="lines+markers"
     ))
 
-    fig.update_layout(height=350)
+    fig.update_layout(
+        height=350,
+        xaxis_title="Ano",
+        yaxis_title="Variabilidade"
+    )
 
     return fig
 
