@@ -522,28 +522,18 @@ with col_mapa1:
         unsafe_allow_html=True
     )
 
-    # Centro padrão (mapa completo da bacia)
+    # Centro padrão (caso não haja estações filtradas)
     lat_centro = -3.5
     lon_centro = -60
     zoom_mapa = 5
 
-    # Filtrar estações pelo país selecionado
+    # 🔎 Filtrar estações pelo país selecionado
     estacoes_filtradas = [
         e for e in estacoes
         if not pais_selecionado or pais_selecionado.lower() in e["pais"]
     ]
-    
-    # Se houver estações, centraliza nelas
-    if estacoes_filtradas:
-        coords = [e["coords"] for e in estacoes_filtradas]
-    
-        lat_media = sum(c[0] for c in coords) / len(coords)
-        lon_media = sum(c[1] for c in coords) / len(coords)
-    
-        lat_centro = lat_media
-        lon_centro = lon_media
-        zoom_mapa = 6
 
+    # 🗺️ Criar mapa
     mapa = folium.Map(
         location=[lat_centro, lon_centro],
         zoom_start=zoom_mapa,
@@ -553,18 +543,19 @@ with col_mapa1:
 
     LocateControl(auto_start=False).add_to(mapa)
 
-    for e in estacoes:
-        if pais_selecionado and pais_selecionado.lower() not in e["pais"]:
-            continue
-
+    # 📍 Adicionar marcadores apenas das estações filtradas
+    for e in estacoes_filtradas:
         folium.Marker(
             location=e["coords"],
             tooltip=e["nome"],
             icon=folium.Icon(color="blue", icon="map-pin", prefix="fa")
         ).add_to(mapa)
 
-    retorno = st_folium(mapa, height=400, use_container_width=True)
+    # 🎯 Ajustar enquadramento automaticamente
+    if estacoes_filtradas:
+        mapa.fit_bounds([e["coords"] for e in estacoes_filtradas])
 
+    retorno = st_folium(mapa, height=400, use_container_width=True)
 # ================= MAPA WINDY =================
 with col_mapa2:
     st.markdown(
