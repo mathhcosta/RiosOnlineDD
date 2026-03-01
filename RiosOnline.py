@@ -491,6 +491,7 @@ pais_selecionado = st.selectbox(
 
 # ================= MAPA ESTAÇÕES =================
 with col_mapa1:
+
     st.markdown(
         """
         <div style="
@@ -505,15 +506,18 @@ with col_mapa1:
         unsafe_allow_html=True
     )
 
-    # Centro padrão
+    # Centro padrão (mapa completo da bacia)
     lat_centro = -3.5
     lon_centro = -60
     zoom_mapa = 5
 
-    # Se GPS capturado
-    if st.session_state["lat_user"]:
-        lat_centro = st.session_state["lat_user"]
-        lon_centro = st.session_state["lon_user"]
+    # 🔐 Pegar GPS de forma segura
+    lat_user = st.session_state.get("lat_user")
+    lon_user = st.session_state.get("lon_user")
+
+    if lat_user is not None and lon_user is not None:
+        lat_centro = lat_user
+        lon_centro = lon_user
         zoom_mapa = 8
 
     mapa = folium.Map(
@@ -526,7 +530,7 @@ with col_mapa1:
     LocateControl(auto_start=False).add_to(mapa)
 
     for e in estacoes:
-        if pais_selecionado.lower() not in e["pais"]:
+        if pais_selecionado and pais_selecionado.lower() not in e["pais"]:
             continue
 
         folium.Marker(
