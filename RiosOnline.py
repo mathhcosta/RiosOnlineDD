@@ -527,14 +527,19 @@ with col_mapa1:
     lon_centro = -60
     zoom_mapa = 5
 
-    # 🔐 Pegar GPS de forma segura
-    lat_user = st.session_state.get("lat_user")
-    lon_user = st.session_state.get("lon_user")
-
-    if lat_user is not None and lon_user is not None:
-        lat_centro = lat_user
-        lon_centro = lon_user
-        zoom_mapa = 8
+    # Filtrar estações pelo país selecionado
+    estacoes_filtradas = [
+        e for e in estacoes
+        if not pais_selecionado or pais_selecionado.lower() in e["pais"]
+    ]
+    
+    if estacoes_filtradas:
+        lat_media = sum(e["coords"][0] for e in estacoes_filtradas) / len(estacoes_filtradas)
+        lon_media = sum(e["coords"][1] for e in estacoes_filtradas) / len(estacoes_filtradas)
+    
+        lat_centro = lat_media
+        lon_centro = lon_media
+        zoom_mapa = 6
 
     mapa = folium.Map(
         location=[lat_centro, lon_centro],
