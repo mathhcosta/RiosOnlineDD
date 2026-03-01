@@ -261,8 +261,14 @@ def obter_pais_por_gps(lat, lon):
 
     except:
         return None
-pais_detectado = obter_pais_por_gps(lat_user, lon_user)
+lat_user = st.session_state.get("lat_user")
+lon_user = st.session_state.get("lon_user")
 
+pais_detectado = None
+
+if lat_user is not None and lon_user is not None:
+    pais_detectado = obter_pais_por_gps(lat_user, lon_user)
+    
 if pais_detectado and not st.session_state["pais_selecionado"]:
     st.session_state["pais_selecionado"] = pais_detectado
 
