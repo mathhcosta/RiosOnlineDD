@@ -465,15 +465,24 @@ if "gps_carregado" not in st.session_state:
 
 # Captura automática ao abrir
 if not st.session_state["gps_carregado"]:
-    loc = get_geolocation()
 
-    if loc:
-        lat = loc["coords"]["latitude"]
-        lon = loc["coords"]["longitude"]
+    try:
+        loc = get_geolocation()
 
-        st.session_state["lat_user"] = lat
-        st.session_state["lon_user"] = lon
-        st.session_state["pais_gps"] = obter_pais_por_gps(lat, lon)
+        if loc and "coords" in loc:
+            lat = loc["coords"].get("latitude")
+            lon = loc["coords"].get("longitude")
+
+            if lat is not None and lon is not None:
+                st.session_state["lat_user"] = lat
+                st.session_state["lon_user"] = lon
+                st.session_state["pais_gps"] = obter_pais_por_gps(lat, lon)
+
+        # Marca como carregado mesmo se GPS for negado
+        st.session_state["gps_carregado"] = True
+
+    except Exception:
+        # Se der qualquer erro, continua sem GPS
         st.session_state["gps_carregado"] = True
 
 # ================= LISTA DE PAÍSES =================
