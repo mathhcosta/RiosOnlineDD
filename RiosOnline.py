@@ -13,6 +13,13 @@ from streamlit_js_eval import get_geolocation
 import sqlite3
 from datetime import datetime
 
+
+if "lat_user" not in st.session_state:
+    st.session_state["lat_user"] = None
+
+if "lon_user" not in st.session_state:
+    st.session_state["lon_user"] = None
+    
 # ================= CONFIG =================
 st.set_page_config(
     page_title="Sala de Situação – Rios Online",
