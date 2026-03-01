@@ -533,9 +533,12 @@ with col_mapa1:
         if not pais_selecionado or pais_selecionado.lower() in e["pais"]
     ]
     
+    # Se houver estações, centraliza nelas
     if estacoes_filtradas:
-        lat_media = sum(e["coords"][0] for e in estacoes_filtradas) / len(estacoes_filtradas)
-        lon_media = sum(e["coords"][1] for e in estacoes_filtradas) / len(estacoes_filtradas)
+        coords = [e["coords"] for e in estacoes_filtradas]
+    
+        lat_media = sum(c[0] for c in coords) / len(coords)
+        lon_media = sum(c[1] for c in coords) / len(coords)
     
         lat_centro = lat_media
         lon_centro = lon_media
