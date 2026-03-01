@@ -501,26 +501,13 @@ lista_paises = sorted(
     set(p for e in estacoes for p in e["pais"] if p)
 )
 
-# Inicializa estado se não existir
-if "pais_selecionado" not in st.session_state:
-    st.session_state["pais_selecionado"] = None
+# Define país padrão automaticamente
+pais_gps = st.session_state["pais_gps"]
 
-pais_gps = st.session_state.get("pais_gps")
-
-# Só define automaticamente se ainda não houver seleção manual
-if (
-    pais_gps
-    and pais_gps in lista_paises
-    and not st.session_state["pais_selecionado"]
-):
-    st.session_state["pais_selecionado"] = pais_gps
-
-# Selectbox controlado por session_state
-pais_selecionado = st.selectbox(
-    "Selecione o país",
-    lista_paises,
-    key="pais_selecionado"
-)
+if pais_gps and pais_gps in lista_paises:
+    indice_padrao = lista_paises.index(pais_gps)
+else:
+    indice_padrao = 0
 
 # ================= SELECTBOX =================
 pais_selecionado = st.selectbox(
