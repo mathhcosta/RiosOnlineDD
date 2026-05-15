@@ -12,16 +12,45 @@ from folium.plugins import LocateControl
 from streamlit_js_eval import get_geolocation
 import sqlite3
 from datetime import datetime
+import math
 
+# ================= SESSION STATE =================
 if "pais_selecionado" not in st.session_state:
     st.session_state["pais_selecionado"] = None
-    
+
+if "pais_gps" not in st.session_state:
+    st.session_state["pais_gps"] = None
+
 if "lat_user" not in st.session_state:
     st.session_state["lat_user"] = None
 
 if "lon_user" not in st.session_state:
     st.session_state["lon_user"] = None
     
+# ================= PARÂMETROS DA URL (QR CODE) =================
+params = st.query_params
+
+if "lat" in params and "lon" in params:
+    try:
+        lat_qr = float(params["lat"])
+        lon_qr = float(params["lon"])
+
+        st.session_state["lat_user"] = lat_qr
+        st.session_state["lon_user"] = lon_qr
+
+        # Atualiza país automaticamente
+        pais = obter_pais_por_gps(lat_qr, lon_qr)
+        if pais:
+            st.session_state["pais_gps"] = pais
+
+    except:
+        pass
+
+# QR direto para estação
+if "codigo" in params:
+    st.session_state["codigo_estacao"] = params["codigo"]
+
+
 # ================= CONFIG =================
 st.set_page_config(
     page_title="Sala de Situação – Rios Online",
@@ -51,7 +80,7 @@ st.markdown(
             letter-spacing:0.5px;
             color:#1f4e79;
         ">
-            Sala de Situação – Rios Online
+            Visualizador Ribeirinho – Rios Online
         </span>
     </div>
     """,
@@ -61,10 +90,10 @@ st.markdown(
 
 col0, col1, col2, col3, col4 = st.columns([2,3,3,3,2])
 
-with col2:
-    st.image("static/logos/logo.png", width=260)
+#with col2:
+ #   st.image("static/logos/logo.png", width=260)
 
-st.markdown("---")
+#st.markdown("---")
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 
@@ -261,6 +290,43 @@ def obter_pais_por_gps(lat, lon):
 
     except:
         return None
+
+def calcular_distancia(lat1, lon1, lat2, lon2):
+    R = 6371  # km
+
+    dlat = math.radians(lat2 - lat1)
+    dlon = math.radians(lon2 - lon1)
+
+    a = (
+        math.sin(dlat / 2) ** 2 +
+        math.cos(math.radians(lat1)) *
+        math.cos(math.radians(lat2)) *
+        math.sin(dlon / 2) ** 2
+    )
+
+    c = 2 * math.atan2(math.sqrt(a), math.sqrt(1 - a))
+
+    return R * c
+
+
+def estacoes_mais_proximas(estacoes, lat_user, lon_user, n=3):
+    lista = []
+
+    for e in estacoes:
+        lat_e, lon_e = e["coords"]
+
+        dist = calcular_distancia(lat_user, lon_user, lat_e, lon_e)
+
+        lista.append({
+            "estacao": e,
+            "distancia": dist
+        })
+
+    lista = sorted(lista, key=lambda x: x["distancia"])
+
+    return lista[:n]
+
+
 lat_user = st.session_state.get("lat_user")
 lon_user = st.session_state.get("lon_user")
 
@@ -270,6 +336,9 @@ if lat_user is not None and lon_user is not None:
     pais_detectado = obter_pais_por_gps(lat_user, lon_user)
     
 if pais_detectado and not st.session_state["pais_selecionado"]:
+    st.session_state["pais_selecionado"] = pais_detectado
+
+if pais_detectado:
     st.session_state["pais_selecionado"] = pais_detectado
 
 def grafico_variabilidade(df_anuais):
@@ -468,33 +537,30 @@ estacoes = carregar_estacoes(pasta_estacoes)
 col_mapa1, col_mapa2 = st.columns(2)
 
 # ================= GPS AUTOMÁTICO =================
-if "gps_carregado" not in st.session_state:
-    st.session_state["gps_carregado"] = False
-    st.session_state["pais_gps"] = None
-    st.session_state["lat_user"] = None
-    st.session_state["lon_user"] = None
 
-# Captura automática ao abrir
-if not st.session_state["gps_carregado"]:
+# Só tenta pegar GPS se NÃO veio via QR
+if st.session_state.get("lat_user") is None:
 
     try:
         loc = get_geolocation()
 
         if loc and "coords" in loc:
+
             lat = loc["coords"].get("latitude")
             lon = loc["coords"].get("longitude")
 
             if lat is not None and lon is not None:
+
                 st.session_state["lat_user"] = lat
                 st.session_state["lon_user"] = lon
-                st.session_state["pais_gps"] = obter_pais_por_gps(lat, lon)
 
-        # Marca como carregado mesmo se GPS for negado
-        st.session_state["gps_carregado"] = True
+                # Define país automaticamente
+                pais = obter_pais_por_gps(lat, lon)
+                if pais:
+                    st.session_state["pais_gps"] = pais
 
-    except Exception:
-        # Se der qualquer erro, continua sem GPS
-        st.session_state["gps_carregado"] = True
+    except:
+        pass
 
 # ================= LISTA DE PAÍSES =================
 lista_paises = sorted(
@@ -502,7 +568,7 @@ lista_paises = sorted(
 )
 
 # Define país padrão automaticamente
-pais_gps = st.session_state["pais_gps"]
+pais_gps = st.session_state.get("pais_gps")
 
 if pais_gps and pais_gps in lista_paises:
     indice_padrao = lista_paises.index(pais_gps)
@@ -513,7 +579,7 @@ else:
 pais_selecionado = st.selectbox(
     "🌎 Filtrar estações por país",
     lista_paises,
-    index=indice_padrao
+    key="pais_selecionado"
 )
 
 # ================= MAPA ESTAÇÕES =================
@@ -553,17 +619,55 @@ with col_mapa1:
     )
 
     LocateControl(auto_start=False).add_to(mapa)
+    lat_user = st.session_state.get("lat_user")
+    lon_user = st.session_state.get("lon_user")
+
+    estacoes_proximas = []
+
+    if lat_user is not None and lon_user is not None:
+        estacoes_proximas = estacoes_mais_proximas(estacoes, lat_user, lon_user, 3)
 
     # 📍 Adicionar marcadores apenas das estações filtradas
     for e in estacoes_filtradas:
+
+        destaque = any(
+            e["codigo"] == p["estacao"]["codigo"]
+            for p in estacoes_proximas
+        )
+
+        cor = "red" if destaque else "blue"
+
         folium.Marker(
             location=e["coords"],
             tooltip=e["nome"],
-            icon=folium.Icon(color="blue", icon="map-pin", prefix="fa")
+            icon=folium.Icon(color=cor, icon="map-pin", prefix="fa")
+        ).add_to(mapa)
+
+    if lat_user and lon_user:
+        folium.Marker(
+            location=[lat_user, lon_user],
+            tooltip="Sua localização",
+            icon=folium.Icon(color="green", icon="user", prefix="fa")
         ).add_to(mapa)
 
     # 🎯 Ajustar enquadramento automaticamente
-    if estacoes_filtradas:
+    lat_user = st.session_state.get("lat_user")
+    lon_user = st.session_state.get("lon_user")
+
+    # 📍 Se tiver GPS → foca nas 3 mais próximas
+    if lat_user is not None and lon_user is not None and estacoes_proximas:
+
+        coords_bounds = [
+            p["estacao"]["coords"] for p in estacoes_proximas
+        ]
+
+        # inclui usuário no enquadramento
+        coords_bounds.append([lat_user, lon_user])
+
+        mapa.fit_bounds(coords_bounds)
+
+    # 🌎 fallback → todas estações filtradas
+    elif estacoes_filtradas:
         mapa.fit_bounds([e["coords"] for e in estacoes_filtradas])
 
     retorno = st_folium(mapa, height=400, use_container_width=True)
